@@ -75,5 +75,31 @@ npm run dev
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
 
+## 原始表启停的来源通道归属控制
+
+原始表的启用/停用同步不再对所有值班人员开放，而是按「来源通道归属」鉴权：
+
+- **一次判定完成**：`IAMService.evaluate` 对原始表+操作者一次性给出归属、角色、
+  启停权限与只读范围（`full`/`group`/`cross`/`temp`），启停统一走
+  `require_toggle` 闸门；越权返回 403 并携带归属信息，同步进程与下游队列零变化。
+- **只读范围**：同组值班员可浏览目标路径与校验结果；跨部门用户业务字段只读；
+  临时协作账号仅能读取原始表路径与最近一次校验时间；连接参数中的账户名/口令对
+  非负责人整体脱敏为 `***`。
+- **下游联动**：停用后依赖该原始表的清洗表进入待处理清单
+  （`/api/access/silver-pending`），重新启用时按入队前状态恢复并出队。
+- **归属变更可追溯**：负责人转交、请假委托（到期自动收回）均留只追加审计；
+  历史操作按当时人员快照归属，新动作才记在新负责人/受托人名下。
+- **异步裁决**：请求提交与裁决分离，按裁决时刻的身份判定，覆盖「撤权晚于提交」
+  与「角色临时升级后回退」两种顺序。
+- **冲突可解释**：30 秒内的启用/停用两个请求都会保留为独立审计事实，
+  `/api/bronze/{id}/state-explanation` 按操作时间重放事件并解释最终状态。
+- **按来源追责**：审计台账支持按操作来源（`X-Operator-Source`）、操作对象、
+  操作人查询责任记录。
+
+相关接口：`POST /api/bronze/{id}/actions`（请求头 `X-Operator-Id`）、
+`GET /api/bronze/{id}/permission`、`POST /api/bronze/{id}/requests` 与
+`/api/bronze/requests/{编号}/decide`、`/api/access/*`。
+测试：`cd backend && .venv/bin/python -m unittest discover -s tests -v`。
+
 领域：数据工程
 子方向：数仓与数据湖

@@ -36,3 +36,10 @@ def health() -> dict[str, object]:
 def overview() -> dict[str, object]:
     """运营概览：把各业务模块的待处理量汇总成看板卡片。"""
     return store.overview()
+
+
+@app.post("/api/dev/reset")
+def dev_reset() -> dict[str, object]:
+    """本地演示/测试辅助：把内存数据（含归属、委托、审计、待办）恢复到种子状态。"""
+    store.reset()
+    return {"ok": True, "modules": len(store.module_names())}

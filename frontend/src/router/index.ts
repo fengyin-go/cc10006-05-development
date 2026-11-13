@@ -19,6 +19,7 @@ const Backfill = () => import('@/views/backfill/index.vue')
 const Search = () => import('@/views/search/index.vue')
 const Resource = () => import('@/views/resource/index.vue')
 const Audit = () => import('@/views/audit/index.vue')
+const Access = () => import('@/views/access/index.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -42,6 +43,7 @@ const router = createRouter({
     { path: '/search', name: 'search', component: Search },
     { path: '/resource', name: 'resource', component: Resource },
     { path: '/audit', name: 'audit', component: Audit },
+    { path: '/access', name: 'access', component: Access },
   ],
 })
 
